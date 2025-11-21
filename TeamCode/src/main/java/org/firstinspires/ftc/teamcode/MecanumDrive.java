@@ -1,66 +1,84 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import android.net.wifi.rtt.RangingRequest;
+
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.IMU;
 
-@TeleOp(name = "Motor Joystick Control", group = "Examples")
-public class MecanumDrive extends LinearOpMode {
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
-    // Declare motor array
-    private DcMotor[] motorList = new DcMotor[4];
-    private double maxSpeed = 1;
+public class MecanumDrive {
 
-    @Override
-    public void runOpMode() {
-        // Initialize motors (names must match Driver Station config)
-        motorList[0] = hardwareMap.get(DcMotor.class, "top_right_motor");
-        motorList[1] = hardwareMap.get(DcMotor.class, "top_left_motor");
-        motorList[2] = hardwareMap.get(DcMotor.class, "bottom_right_motor");
-        motorList[3] = hardwareMap.get(DcMotor.class, "bottom_left_motor");
+    private DcMotor frontLeft, frontRight, backLeft, backRight;
+    private IMU imu;
 
-        // Set motor directions
-        motorList[0].setDirection(DcMotor.Direction.REVERSE);
-        motorList[2].setDirection(DcMotor.Direction.REVERSE);
-        motorList[1].setDirection(DcMotor.Direction.FORWARD);
-        motorList[3].setDirection(DcMotor.Direction.FORWARD);
+    public void init(HardwareMap hwMap) {
+        // Finds and initializes all of the Motors
+        // Requires motors named "top_left_motor", "top_right_motor", "top_left_motor", and "top_right_motor"
+        frontLeft = hwMap.get(DcMotor.class, "top_left_motor");
+        frontRight = hwMap.get(DcMotor.class, "top_right_motor");
+        backLeft = hwMap.get(DcMotor.class, "top_left_motor");
+        backRight = hwMap.get(DcMotor.class, "top_right_motor");
 
-        waitForStart();
+        // Sets the right side to reverse for mecanum
+        frontRight.setDirection(DcMotor.Direction.REVERSE);
+        backRight.setDirection(DcMotor.Direction.REVERSE);
 
-        Drive mainDriver = new Drive();
+        // Sets the motors to run using the encoders, meaning it will do more fancy stuff in the background to make our motors perform more optimally.
+        frontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        while (opModeIsActive()) {
-                double leftY = -gamepad1.left_stick_y;
-                double leftX = gamepad1.left_stick_x;
-                double rightX = gamepad1.right_stick_x;
-                double tempRotation = gamepad1.right_stick_y*360;
+        // initialize the intertial measurement unit
+        imu = hwMap.get(IMU.class, "imu");
 
-                double[] powers = mainDriver.move2d(leftY, leftX, rightX);
-                motorList[0].setPower(Math.cos(tempRotation*Math.PI/180)*powers[0]+Math.sin(tempRotation*Math.PI/180)*-powers[2]);
-                motorList[1].setPower(Math.cos(tempRotation*Math.PI/180)*powers[1]+Math.sin(tempRotation*Math.PI/180)*-powers[0]);
-                motorList[2].setPower(Math.cos(tempRotation*Math.PI/180)*powers[2]+Math.sin(tempRotation*Math.PI/180)*powers[1]);
-                motorList[3].setPower(Math.cos(tempRotation*Math.PI/180)*powers[3]+Math.sin(tempRotation*Math.PI/180)*powers[3]);
+        // Sets the Orientation of the robot so it knows whats the front of the robot and stuff
+        // This assumes the hub is mounted on the left side with the logo facing the right, and the USB ports face up.
+        RevHubOrientationOnRobot RevOrientation = new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.RIGHT, RevHubOrientationOnRobot.UsbFacingDirection.UP);
 
-                telemetry.addData("Left Stick Y", leftY);
-                telemetry.addData("Left Stick X", leftX);
-                telemetry.addData("Right Stick X", rightX);
-                telemetry.addData("top_right_motor:", motorList[0].getPower());
-                telemetry.addData("top_left_motor:", motorList[1].getPower());
-                telemetry.addData("bottom_right_motor:", motorList[2].getPower());
-                telemetry.addData("bottom_left_motor:", motorList[3].getPower());
-                telemetry.update();
-            }
-        }
+        imu.initialize(new IMU.Parameters(RevOrientation));
 
-        class Drive {
-            double[] move2d(double forward, double strafe, double turn) {
-                return new double[]{
-                    (forward - strafe - turn) * maxSpeed, // top right
-                    (forward - strafe + turn) * maxSpeed, // top left
-                    (forward + strafe - turn) * maxSpeed, // bottom right
-                    (forward + strafe + turn) * maxSpeed  // bottom left
-            };
-        }
+    }
+
+    public void drive(double forward, double strafe, double rotate) {
+        double frontLeftPower = forward + strafe + rotate;
+        double backLeftPower = forward - strafe + rotate;
+        double frontRightPower = forward - strafe - rotate;
+        double backRightPower = forward + strafe - rotate;
+
+        double maxPower = 1;
+        double maxSpeed = 1;
+
+        // Checks to see which value is the maximum value so we can adjust for it
+        // If we didn't do this, we could theoretically get powers of up to 3, but it is limited to one, so it would not drive as expected.
+        maxPower = Math.max(maxPower, Math.abs(frontLeftPower));
+        maxPower = Math.max(maxPower, Math.abs(backLeftPower));
+        maxPower = Math.max(maxPower, Math.abs(frontRightPower));
+        maxPower = Math.max(maxPower, Math.abs(backRightPower));
+
+        frontLeft.setPower(maxSpeed * (frontLeftPower/maxPower));
+        backLeft.setPower(maxSpeed * (backLeftPower/maxPower));
+        frontRight.setPower(maxSpeed * (frontLeftPower/maxPower));
+        backRight.setPower(maxSpeed * (backLeftPower/maxPower));
+    }
+
+
+
+    public void driveFieldRelative(double forward, double strafe, double rotate) {
+        double theta = Math.atan2(forward, strafe);
+        double r = Math.hypot(strafe, forward);
+
+        // Gets Polar Coordinates of our robot
+        theta = AngleUnit.normalizeRadians(theta - imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
+
+        double newForward = r * Math.sin(theta);
+        double newStrafe =r * Math.cos(theta);
+
+        this.drive(newForward, newStrafe, rotate);
+
+
     }
 }
