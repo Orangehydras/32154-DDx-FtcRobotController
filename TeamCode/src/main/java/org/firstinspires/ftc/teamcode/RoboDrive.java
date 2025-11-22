@@ -30,7 +30,7 @@ public class RoboDrive extends LinearOpMode {
         Drive mainDriver = new Drive();
 
         while (opModeIsActive()) {
-                double leftY = -gamepad1.left_stick_y;
+                double leftY = gamepad1.left_stick_y;
                 double leftX = -gamepad1.left_stick_x;
                 double rightX = -gamepad1.right_stick_x;
 
@@ -41,8 +41,8 @@ public class RoboDrive extends LinearOpMode {
                 motorList[2].setPower(Math.cos(tempRotation*Math.PI/180)*powers[2]+Math.sin(tempRotation*Math.PI/180)*powers[1]);
                 motorList[3].setPower(Math.cos(tempRotation*Math.PI/180)*powers[3]+Math.sin(tempRotation*Math.PI/180)*powers[3]);*/
 
-                motorList[0].setPower(powers[0]*1.1);
-                motorList[1].setPower(powers[1]*1.1);
+                motorList[0].setPower(powers[0]);
+                motorList[1].setPower(powers[1]);
                 motorList[2].setPower(powers[2]);
                 motorList[3].setPower(powers[3]);
 
@@ -60,9 +60,9 @@ public class RoboDrive extends LinearOpMode {
         class Drive {
             double[] move2d(double forward, double strafe, double turn) {
                 return new double[]{
-                    (forward + strafe - turn) * maxSpeed, // top right
+                    (forward - strafe - turn) * maxSpeed, // top right
                     (forward - strafe + turn) * maxSpeed, // top left
-                    (forward - strafe - turn) * maxSpeed, // bottom right
+                    (forward + strafe - turn) * maxSpeed, // bottom right
                     (forward + strafe + turn) * maxSpeed  // bottom left
             };
         }

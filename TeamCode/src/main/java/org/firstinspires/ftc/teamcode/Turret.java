@@ -17,7 +17,10 @@ public class Turret {
         fly_wheel.setDirection(DcMotor.Direction.FORWARD);
     }
 
-    public void shooter(boolean spin, boolean shoot) {
+    public void shooter(boolean spin, boolean shoot, boolean stop) {
+        // if the button to spin the flywheel is pressed(left bumper), sets the flywheel power from 0.5 to 1.0
+        // if the button to shoot is pressed(right bumper), sets the intake power from 0.3 to 0.6
+
         if (spin == true) {
             fly_wheel.setPower(1.0);
         } else {
@@ -25,6 +28,8 @@ public class Turret {
         }
         if (shoot = true) {
             intake.setPower(0.6);
+        } else if (stop == true) {
+            intake.setPower(0);
         } else {
             intake.setPower(0.3);
         }

@@ -19,8 +19,8 @@ public class MecanumDrive {
         // Requires motors named "top_left_motor", "top_right_motor", "top_left_motor", and "top_right_motor"
         frontLeft = hwMap.get(DcMotor.class, "top_left_motor");
         frontRight = hwMap.get(DcMotor.class, "top_right_motor");
-        backLeft = hwMap.get(DcMotor.class, "top_left_motor");
-        backRight = hwMap.get(DcMotor.class, "top_right_motor");
+        backLeft = hwMap.get(DcMotor.class, "bottom_left_motor");
+        backRight = hwMap.get(DcMotor.class, "bottom_right_motor");
 
         // Sets the right side to reverse for mecanum
         frontRight.setDirection(DcMotor.Direction.REVERSE);
@@ -44,6 +44,7 @@ public class MecanumDrive {
     }
 
     public void drive(double forward, double strafe, double rotate) {
+        // does the math to set the correct power to each wheel
         double frontLeftPower = forward + strafe + rotate;
         double backLeftPower = forward - strafe + rotate;
         double frontRightPower = forward - strafe - rotate;
@@ -61,8 +62,8 @@ public class MecanumDrive {
 
         frontLeft.setPower(maxSpeed * (frontLeftPower/maxPower));
         backLeft.setPower(maxSpeed * (backLeftPower/maxPower));
-        frontRight.setPower(maxSpeed * (frontLeftPower/maxPower));
-        backRight.setPower(maxSpeed * (backLeftPower/maxPower));
+        frontRight.setPower(maxSpeed * (frontRightPower/maxPower));
+        backRight.setPower(maxSpeed * (backRightPower/maxPower));
     }
 
 
@@ -74,10 +75,11 @@ public class MecanumDrive {
         // Gets Polar Coordinates of our robot
         theta = AngleUnit.normalizeRadians(theta - imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
 
-        double newForward = r * Math.sin(theta);
-        double newStrafe =r * Math.cos(theta);
+        // Converts our polar coordinates back into cartesian so we can use our drive class
+        double finalForward = r * Math.sin(theta);
+        double finalStrafe =r * Math.cos(theta);
 
-        this.drive(newForward, newStrafe, rotate);
+        this.drive(finalForward, finalStrafe, rotate);
 
 
     }
