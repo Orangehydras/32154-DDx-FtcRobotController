@@ -12,12 +12,14 @@
 // left bumper increases intake speed to 0.6, and right bumper increases flywheel speed to 1.0
 // Pressing B stops the intake entirely, unless shooting, and pressing A starts the intake again
 
-
-
-
 package org.firstinspires.ftc.teamcode;
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
+import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
+
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.util.Range;
 
 @TeleOp(name = "Comp Code")
 public class CompTeleop extends OpMode {
@@ -25,9 +27,12 @@ public class CompTeleop extends OpMode {
     MecanumDrive drive = new MecanumDrive();
     //imports our turret class
     Turret flywheel = new Turret();
+
+    private IMU imu;
+
     // declare the variables that we will need.
-    double forward, strafe, rotate;
-    boolean spin, shoot, stop, lastA, currentA, currentB, lastB;
+    double forward, strafe, rotate, hoodAngle;
+    boolean spin, shoot, stop, lastA, currentA, currentB, lastY, currentY, lastB, reverse;
 
     @Override
     public void init() {
@@ -35,22 +40,32 @@ public class CompTeleop extends OpMode {
         drive.init(hardwareMap);
         // Run the init in the Turret class which finds the motors for the flywheel and the intake
         flywheel.init(hardwareMap);
+        imu = hardwareMap.get(IMU.class, "imu");
     }
 
     @Override
     public void loop() {
         // get some of the variables from gamepad 1 for our movement
         forward = gamepad1.left_stick_y;
-        strafe = gamepad1.left_stick_x;
-        rotate = gamepad1.right_stick_x;
+        strafe = -gamepad1.left_stick_x;
+        rotate = -gamepad1.right_stick_x;
 
         // gets the variables for Spinning the flywheel and shooting from gamepad 2
         spin = gamepad2.left_bumper;
         shoot = gamepad2.right_bumper;
 
         // Start and Stop for the intake
-        currentA = gamepad1.a;
-        currentB = gamepad1.b;
+        currentA = gamepad2.a;
+        currentB = gamepad2.b;
+        currentY = gamepad2.y;
+
+        if (gamepad2.dpad_up) {
+            hoodAngle += 0.05;
+        }
+        if (gamepad2.dpad_down) {
+            hoodAngle -= 0.05;
+        }
+        hoodAngle = Range.clip(hoodAngle, 0.2, 0.8);
 
         // A pressed → start motor
         if (currentA && !lastA) {
@@ -62,19 +77,30 @@ public class CompTeleop extends OpMode {
             stop = true;
         }
 
+        if (currentY && !lastY) {
+            reverse = !reverse;
+        }
+        // if the Start button is pressed, resests the IMU Yaw
+        if (gamepad1.options) {
+            drive.reset();
+        }
+
         lastA = currentA;
         lastB = currentB;
+        lastY = currentY;
 
         telemetry.addData("Strafe ", strafe);
         telemetry.addData("Forward ", forward);
         telemetry.addData("Rotation ", rotate);
         telemetry.addData("Shooting? ", shoot);
 
+
         // passes the movement values from gamepad 1 into the mecanum class
         drive.driveFieldRelative(forward, strafe, rotate);
 
         // passes the button values for the shooter from gamepad 2 into the turret class
-        flywheel.shooter(spin, shoot, stop);
+        flywheel.shooter(spin, shoot, stop, reverse, hoodAngle);
+        telemetry.addData("Yaw", imu.getRobotYawPitchRollAngles().getYaw(DEGREES));
 
     }
 

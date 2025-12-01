@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.teamcode;
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
+import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
+
 import android.net.wifi.rtt.RangingRequest;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
@@ -40,6 +43,7 @@ public class MecanumDrive {
         RevHubOrientationOnRobot RevOrientation = new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.RIGHT, RevHubOrientationOnRobot.UsbFacingDirection.UP);
 
         imu.initialize(new IMU.Parameters(RevOrientation));
+        imu.resetYaw();
 
     }
 
@@ -73,7 +77,7 @@ public class MecanumDrive {
         double r = Math.hypot(strafe, forward);
 
         // Gets Polar Coordinates of our robot
-        theta = AngleUnit.normalizeRadians(theta - imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS));
+        theta = AngleUnit.normalizeRadians(theta - (imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS)));
 
         // Converts our polar coordinates back into cartesian so we can use our drive class
         double finalForward = r * Math.sin(theta);
@@ -81,6 +85,10 @@ public class MecanumDrive {
 
         this.drive(finalForward, finalStrafe, rotate);
 
+    }
 
+    // resets the yaw when the start button is pressed
+    public void reset() {
+        imu.resetYaw();
     }
 }
