@@ -5,18 +5,21 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGR
 
 import android.net.wifi.rtt.RangingRequest;
 
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
 public class MecanumDrive {
 
     private DcMotor frontLeft, frontRight, backLeft, backRight;
     private IMU imu;
-
     public void init(HardwareMap hwMap) {
         // Finds and initializes all of the Motors
         // Requires motors named "top_left_motor", "top_right_motor", "top_left_motor", and "top_right_motor"
@@ -35,6 +38,7 @@ public class MecanumDrive {
         backLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         backRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+        // initialize the limelight camera
         // initialize the intertial measurement unit
         imu = hwMap.get(IMU.class, "imu");
 
@@ -46,6 +50,8 @@ public class MecanumDrive {
         imu.resetYaw();
 
     }
+
+
 
     public void drive(double forward, double strafe, double rotate) {
         // does the math to set the correct power to each wheel
@@ -90,5 +96,21 @@ public class MecanumDrive {
     // resets the yaw when the start button is pressed
     public void reset() {
         imu.resetYaw();
+    }
+
+    public void findRobot() {
+        YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
+        limelight.updateRobotOrientation(orientation.getYaw());
+        LLResult result = limelight.getLatestResult();
+        if (result != null && result.isValid()) {
+            Pose3D botPose = result.getBotpose_MT2();
+            telemetry.addData("Tx ", result.getTx());
+            telemetry.addData("Ty ", result.getTy());
+            telemetry.addData("Ta ", result.getTa());
+            telemetry.addData("Bot pose ", botPose.toString());
+
+
+
+        }
     }
 }

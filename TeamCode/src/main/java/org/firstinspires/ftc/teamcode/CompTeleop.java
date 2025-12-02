@@ -16,8 +16,12 @@ package org.firstinspires.ftc.teamcode;
 import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
 
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.Range;
 
@@ -28,6 +32,8 @@ public class CompTeleop extends OpMode {
     //imports our turret class
     Turret flywheel = new Turret();
 
+
+    private Limelight3A limelight;
     private IMU imu;
 
     // declare the variables that we will need.
@@ -40,7 +46,14 @@ public class CompTeleop extends OpMode {
         drive.init(hardwareMap);
         // Run the init in the Turret class which finds the motors for the flywheel and the intake
         flywheel.init(hardwareMap);
-        imu = hardwareMap.get(IMU.class, "imu");
+
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+
+    }
+
+    @Override
+    public void start() {
+        limelight.start();
     }
 
     @Override
@@ -50,11 +63,17 @@ public class CompTeleop extends OpMode {
         strafe = -gamepad1.left_stick_x;
         rotate = -gamepad1.right_stick_x;
 
+        LLResult result = limelight.getLatestResult();
+
+        if (gamepad1.left_bumper) {
+            rotate = LimelightAim.getRotate(result);
+        }
+
         // gets the variables for Spinning the flywheel and shooting from gamepad 2
         spin = gamepad2.left_bumper;
         shoot = gamepad2.right_bumper;
 
-        // Start and Stop for the intake
+        // Start and Stop and reverse for the intake
         currentA = gamepad2.a;
         currentB = gamepad2.b;
         currentY = gamepad2.y;
