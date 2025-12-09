@@ -98,19 +98,5 @@ public class MecanumDrive {
         imu.resetYaw();
     }
 
-    public void findRobot() {
-        YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-        limelight.updateRobotOrientation(orientation.getYaw());
-        LLResult result = limelight.getLatestResult();
-        if (result != null && result.isValid()) {
-            Pose3D botPose = result.getBotpose_MT2();
-            telemetry.addData("Tx ", result.getTx());
-            telemetry.addData("Ty ", result.getTy());
-            telemetry.addData("Ta ", result.getTa());
-            telemetry.addData("Bot pose ", botPose.toString());
 
-
-
-        }
-    }
 }

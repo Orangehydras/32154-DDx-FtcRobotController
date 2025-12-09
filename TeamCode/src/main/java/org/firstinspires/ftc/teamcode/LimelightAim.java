@@ -11,7 +11,7 @@ public class LimelightAim {
     // if it is too low and doesnt swiftly lock onto the april tag, increase the value
 
     private static final double kP = 0.035;
-    private static final double kD = 0.001;
+    private static final double kD = 0.003;
     private static double lastError = 0;
 
     public static double getRotate(LLResult result) {
@@ -30,6 +30,6 @@ public class LimelightAim {
 
         rotate = Range.clip(rotate, -0.5, 0.5);
 
-        return rotate;
+        return -rotate;
     }
 }

@@ -25,7 +25,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.Range;
 
-@TeleOp(name = "Comp Code")
+@TeleOp(name = "Test Limelight Comp Code")
 public class CompTeleop extends OpMode {
     //imports our Mecanum Field Drive Class
     MecanumDrive drive = new MecanumDrive();
@@ -39,6 +39,8 @@ public class CompTeleop extends OpMode {
     // declare the variables that we will need.
     double forward, strafe, rotate, hoodAngle;
     boolean spin, shoot, stop, lastA, currentA, currentB, lastY, currentY, lastB, reverse;
+
+    boolean isRedAlliance = true;
 
     @Override
     public void init() {
@@ -54,6 +56,11 @@ public class CompTeleop extends OpMode {
     @Override
     public void start() {
         limelight.start();
+        if (isRedAlliance) {
+            limelight.pipelineSwitch(0);
+        } else {
+            limelight.pipelineSwitch(1);
+        }
     }
 
     @Override
@@ -119,8 +126,6 @@ public class CompTeleop extends OpMode {
 
         // passes the button values for the shooter from gamepad 2 into the turret class
         flywheel.shooter(spin, shoot, stop, reverse, hoodAngle);
-        telemetry.addData("Yaw", imu.getRobotYawPitchRollAngles().getYaw(DEGREES));
-
     }
 
 }
